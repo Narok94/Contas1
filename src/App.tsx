@@ -20,7 +20,19 @@ import {
   Settings,
   Sun,
   Moon,
-  Upload
+  Upload,
+  ShoppingBag,
+  Car,
+  Home,
+  Coffee,
+  Heart,
+  Book,
+  Smartphone,
+  Briefcase,
+  DollarSign,
+  PieChart as ChartIcon,
+  HelpCircle,
+  ShieldCheck,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -72,8 +84,29 @@ interface StatCardProps {
   color: string;
 }
 
+const getCategoryIcon = (category: string) => {
+  switch (category) {
+    case 'Alimentação': return <Coffee size={14} />;
+    case 'Transporte': return <Car size={14} />;
+    case 'Moradia': return <Home size={14} />;
+    case 'Lazer': return <ShoppingBag size={14} />;
+    case 'Saúde': return <Heart size={14} />;
+    case 'Educação': return <Book size={14} />;
+    case 'Assinaturas': return <Smartphone size={14} />;
+    case 'Salário': return <DollarSign size={14} />;
+    case 'Freelance': return <Briefcase size={14} />;
+    case 'Investimento': return <TrendingUp size={14} />;
+    default: return <HelpCircle size={14} />;
+  }
+};
+
 const StatCard = ({ title, value, icon, color }: StatCardProps) => (
-  <div className="bg-white dark:bg-gray-800 p-4 min-w-[180px] flex-1 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-3 transition-all hover:shadow-md">
+  <motion.div 
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    whileHover={{ scale: 1.02 }}
+    className="bg-white dark:bg-gray-800 p-4 min-w-[180px] flex-1 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-3 transition-all hover:shadow-md"
+  >
     <div className={cn("p-2.5 rounded-xl shrink-0", color)}>
       {React.cloneElement(icon as React.ReactElement, { size: 18 })}
     </div>
@@ -81,7 +114,7 @@ const StatCard = ({ title, value, icon, color }: StatCardProps) => (
       <p className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider truncate">{title}</p>
       <p className="text-base font-black text-gray-900 dark:text-white truncate">{formatCurrency(value)}</p>
     </div>
-  </div>
+  </motion.div>
 );
 
 export default function App() {
@@ -107,8 +140,8 @@ export default function App() {
 
   // Load data
   useEffect(() => {
-    const saved = localStorage.getItem('finflow_accounts');
-    const savedTheme = localStorage.getItem('finflow_theme');
+    const saved = localStorage.getItem('tatufinancas_accounts');
+    const savedTheme = localStorage.getItem('tatufinancas_theme');
     
     if (savedTheme === 'dark') {
       setIsDarkMode(true);
@@ -134,7 +167,7 @@ export default function App() {
 
   // Save data
   useEffect(() => {
-    localStorage.setItem('finflow_accounts', JSON.stringify(accounts));
+    localStorage.setItem('tatufinancas_accounts', JSON.stringify(accounts));
   }, [accounts]);
 
   const toggleTheme = () => {
@@ -142,10 +175,10 @@ export default function App() {
     setIsDarkMode(newMode);
     if (newMode) {
       document.documentElement.classList.add('dark');
-      localStorage.setItem('finflow_theme', 'dark');
+      localStorage.setItem('tatufinancas_theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('finflow_theme', 'light');
+      localStorage.setItem('tatufinancas_theme', 'light');
     }
   };
 
@@ -296,6 +329,15 @@ export default function App() {
       {/* Header / Summary Section */}
       <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 p-4 shadow-sm sticky top-0 z-30">
         <div className="max-w-6xl mx-auto space-y-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-100 dark:shadow-none">
+                <CreditCard size={18} />
+              </div>
+              <h1 className="text-lg font-black tracking-tighter text-gray-900 dark:text-white">Tatu Finanças</h1>
+            </div>
+          </div>
+          
           {/* Month Selector + Settings Trigger */}
           <div className="flex items-center gap-3">
             <div className="flex-1 flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-2 rounded-2xl border border-gray-100 dark:border-gray-700">
@@ -362,30 +404,44 @@ export default function App() {
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-32"
             >
               {sortedAccounts.length === 0 ? (
-                <div className="col-span-full bg-white border-2 border-dashed border-gray-200 rounded-3xl p-20 text-center flex flex-col items-center justify-center">
-                  <div className="bg-indigo-50 p-4 rounded-full text-indigo-600 mb-4">
-                    <Plus size={32} />
+                <div className="col-span-full bg-white dark:bg-gray-800 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-3xl p-20 text-center flex flex-col items-center justify-center">
+                  <div className="bg-indigo-50 dark:bg-indigo-900/20 p-6 rounded-full text-indigo-600 dark:text-indigo-400 mb-6 animate-bounce">
+                    <ShieldCheck size={48} />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900">Nada para {format(selectedDate, 'MMMM', { locale: ptBR })}</h3>
-                  <p className="text-gray-500 mt-2 max-w-xs">Adicione sua primeira conta ou receita para este período.</p>
+                  <h3 className="text-xl font-black text-gray-900 dark:text-white">Seu tatu está descansando!</h3>
+                  <p className="text-gray-500 dark:text-gray-400 mt-2 max-w-xs font-medium">Nada para monitorar em {format(selectedDate, 'MMMM', { locale: ptBR })}. Buraco vazio é sinal de economia!</p>
+                  <button 
+                    onClick={() => openModal()}
+                    className="mt-8 px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-indigo-100 dark:shadow-none"
+                  >
+                    Começar a Cavar
+                  </button>
                 </div>
               ) : (
                 sortedAccounts.map(account => (
                   <motion.div 
                     layout
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ 
+                      layout: { type: "spring", stiffness: 300, damping: 30 },
+                      opacity: { duration: 0.2 }
+                    }}
                     key={account.id}
                     className={cn(
                       "group bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border transition-all flex flex-col h-full min-h-[180px]",
                       account.isPaid 
-                        ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50/40 dark:bg-emerald-900/10 opacity-90 order-last" 
+                        ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50/40 dark:bg-emerald-900/10 opacity-90 shadow-inner" 
                         : "border-gray-100 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-800 hover:shadow-lg"
                     )}
                   >
                     <div className="flex justify-between items-start mb-4">
                       <span className={cn(
-                        "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest",
+                        "px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5",
                         CATEGORY_COLORS[account.category] || "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
                       )}>
+                        {getCategoryIcon(account.category)}
                         {account.category}
                       </span>
                       <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -422,21 +478,23 @@ export default function App() {
                       {account.installments && (
                         <div className="mt-4 space-y-2">
                           <div className={cn(
-                            "flex justify-between text-base font-black uppercase tracking-[0.1em]",
+                            "flex justify-between text-lg font-black uppercase tracking-widest",
                             account.isPaid ? "text-emerald-600 dark:text-emerald-500" : "text-indigo-600 dark:text-indigo-400"
                           )}>
                             <span>Parcelas</span>
-                            <span>{account.installments.current} de {account.installments.total}</span>
+                            <span>{account.installments.current} / {account.installments.total}</span>
                           </div>
                           <div className="w-full h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden border border-gray-50 dark:border-gray-600 shadow-inner">
                             <motion.div 
                               initial={{ width: 0 }}
                               animate={{ width: `${(account.installments.current / account.installments.total) * 100}%` }}
                               className={cn(
-                                "h-full rounded-full shadow-[0_0_12px_rgba(99,102,241,0.5)]",
-                                account.isPaid ? "bg-emerald-500" : "bg-indigo-500"
+                                "h-full rounded-full transition-all relative overflow-hidden",
+                                account.isPaid ? "bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.4)]" : "bg-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.4)]"
                               )} 
-                            />
+                            >
+                              <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent animate-shimmer" style={{ backgroundSize: '200% 100%' }} />
+                            </motion.div>
                           </div>
                         </div>
                       )}
@@ -446,7 +504,9 @@ export default function App() {
                       "flex items-center gap-3 pt-6 mt-4 border-t",
                       account.isPaid ? "border-emerald-100 dark:border-emerald-800/50" : "border-gray-50 dark:border-gray-700"
                     )}>
-                      <button 
+                      <motion.button 
+                        whileTap={{ scale: 0.95 }}
+                        whileHover={{ scale: 1.02 }}
                         onClick={() => togglePaid(account.id)}
                         className={cn(
                           "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[11px] font-black transition-all",
@@ -456,17 +516,17 @@ export default function App() {
                         )}
                       >
                         {account.isPaid ? (
-                          <>
+                          <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="flex items-center gap-2">
                             <CheckCircle size={14} />
                             <span>PAGO</span>
-                          </>
+                          </motion.div>
                         ) : (
-                          <>
+                          <span className="flex items-center gap-2">
                             <Circle size={14} />
                             <span>PAGAR</span>
-                          </>
+                          </span>
                         )}
-                      </button>
+                      </motion.button>
                       <div className="flex gap-2">
                         {account.isRecurring && <Layers size={14} className={account.isPaid ? "text-emerald-400" : "text-indigo-400"} title="Recorrente" />}
                         {!account.installments && !account.isRecurring && <Calendar size={14} className="text-gray-200" />}
@@ -536,7 +596,16 @@ export default function App() {
                           {categoryData.map((entry, index) => (
                             <Cell 
                               key={`cell-${index}`} 
-                              fill={['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#06b6d4', '#4b5563'][index % 8]} 
+                              fill={[
+                                '#6366f1', // Indigo
+                                '#10b981', // Emerald
+                                '#f59e0b', // Amber
+                                '#ef4444', // Red
+                                '#ec4899', // Pink
+                                '#8b5cf6', // Violet
+                                '#06b6d4', // Cyan
+                                '#4b5563'  // Gray
+                              ][index % 8]} 
                             />
                           ))}
                         </Pie>
@@ -546,8 +615,9 @@ export default function App() {
                             border: 'none', 
                             boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
                             backgroundColor: isDarkMode ? '#1f2937' : '#fff',
-                            color: isDarkMode ? '#fff' : '#000'
+                            color: isDarkMode ? '#f3f4f6' : '#111827'
                           }}
+                          itemStyle={{ color: isDarkMode ? '#fff' : '#000' }}
                         />
                       </PieChart>
                     </ResponsiveContainer>
@@ -651,18 +721,23 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsSettingsOpen(false)}
-              className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm"
+              className="absolute inset-0 bg-gray-900/60 backdrop-blur-md"
             />
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-sm bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-2xl p-8 border border-gray-100 dark:border-gray-700"
+              className="relative w-full max-w-sm bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl p-8 border border-gray-100 dark:border-gray-800"
             >
               <div className="flex justify-between items-center mb-8">
-                <div>
-                  <h2 className="text-2xl font-black text-gray-900 dark:text-white">Ajustes</h2>
-                  <p className="text-gray-500 text-sm">Personalize sua experiência</p>
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-200 dark:shadow-none text-white">
+                    <CreditCard size={24} />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black text-gray-900 dark:text-white">Ajustes</h2>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">Personalize sua experiência</p>
+                  </div>
                 </div>
                 <button 
                   onClick={() => setIsSettingsOpen(false)}
@@ -721,7 +796,7 @@ export default function App() {
               </div>
 
               <div className="mt-12 text-center">
-                <p className="text-[10px] font-black text-gray-300 dark:text-gray-600 uppercase tracking-[0.2em]">FinFlow v1.2.0 • 2026</p>
+                <p className="text-[10px] font-black text-gray-300 dark:text-gray-600 uppercase tracking-[0.2em]">Tatu Finanças v2.0.0 • 2026</p>
               </div>
             </motion.div>
           </div>

@@ -4,4 +4,15 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
 }
+
+@utility animate-shimmer {
+  animation: shimmer 2s infinite linear;
+}
+
+@variant dark (&:where(.dark, .dark *));
