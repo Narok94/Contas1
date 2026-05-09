@@ -60,24 +60,6 @@ import { cn, formatCurrency, exportToCSV } from './lib/utils';
 
 const currentMonthStr = format(new Date(), 'yyyy-MM');
 
-const SAMPLE_ACCOUNTS: Account[] = [
-  { id: '1', title: 'Salário Mensal', amount: 5500, type: 'income', category: 'Salário', isPaid: true, isRecurring: true, installments: null, createdAt: new Date().toISOString(), month: currentMonthStr },
-  { id: '2', title: 'Aluguel Casa', amount: 1800, type: 'expense', category: 'Moradia', isPaid: true, isRecurring: true, installments: null, createdAt: new Date().toISOString(), month: currentMonthStr },
-  { id: '3', title: 'Supermercado Mensal', amount: 950.40, type: 'expense', category: 'Alimentação', isPaid: true, isRecurring: false, installments: null, createdAt: new Date().toISOString(), month: currentMonthStr },
-  { id: '4', title: 'Internet Fibra', amount: 120, type: 'expense', category: 'Assinaturas', isPaid: false, isRecurring: true, installments: null, createdAt: new Date().toISOString(), month: currentMonthStr },
-  { id: '5', title: 'Parcela Notebook', amount: 450, type: 'expense', category: 'Outros', isPaid: false, isRecurring: false, installments: { current: 4, total: 12 }, createdAt: new Date().toISOString(), month: currentMonthStr },
-  { id: '6', title: 'Freelance Design', amount: 1200, type: 'income', category: 'Freelance', isPaid: false, isRecurring: false, installments: null, createdAt: new Date().toISOString(), month: currentMonthStr },
-  { id: '7', title: 'Condomínio', amount: 450, type: 'expense', category: 'Moradia', isPaid: true, isRecurring: true, installments: null, createdAt: new Date().toISOString(), month: currentMonthStr },
-  { id: '8', title: 'Energia Elétrica', amount: 280.50, type: 'expense', category: 'Moradia', isPaid: false, isRecurring: true, installments: null, createdAt: new Date().toISOString(), month: currentMonthStr },
-  { id: '9', title: 'Netflix & Spotify', amount: 85.90, type: 'expense', category: 'Assinaturas', isPaid: true, isRecurring: true, installments: null, createdAt: new Date().toISOString(), month: currentMonthStr },
-  { id: '10', title: 'Academia', amount: 110, type: 'expense', category: 'Saúde', isPaid: true, isRecurring: true, installments: null, createdAt: new Date().toISOString(), month: currentMonthStr },
-  { id: '11', title: 'Curso de Inglês', amount: 350, type: 'expense', category: 'Educação', isPaid: false, isRecurring: true, installments: null, createdAt: new Date().toISOString(), month: currentMonthStr },
-  { id: '12', title: 'Uber / Transporte', amount: 420, type: 'expense', category: 'Transporte', isPaid: true, isRecurring: false, installments: null, createdAt: new Date().toISOString(), month: currentMonthStr },
-  { id: '13', title: 'Rendimento CDB', amount: 125.30, type: 'income', category: 'Investimento', isPaid: true, isRecurring: true, installments: null, createdAt: new Date().toISOString(), month: currentMonthStr },
-  { id: '14', title: 'Seguro Carro', amount: 210, type: 'expense', category: 'Transporte', isPaid: true, isRecurring: false, installments: { current: 8, total: 10 }, createdAt: new Date().toISOString(), month: currentMonthStr },
-  { id: '15', title: 'Restaurante Fim de Semana', amount: 180, type: 'expense', category: 'Lazer', isPaid: false, isRecurring: false, installments: null, createdAt: new Date().toISOString(), month: currentMonthStr },
-];
-
 interface StatCardProps {
   title: string;
   value: number;
@@ -153,18 +135,14 @@ export default function App() {
 
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         // Migration: ensure all accounts have a month field
         const migrated = parsed.map((a: any) => ({
           ...a,
           month: a.month || format(new Date(a.createdAt || new Date()), 'yyyy-MM')
         }));
         setAccounts(migrated);
-      } else {
-        setAccounts(SAMPLE_ACCOUNTS);
       }
-    } else {
-      setAccounts(SAMPLE_ACCOUNTS);
     }
   }, []);
 
@@ -193,14 +171,64 @@ export default function App() {
     reader.onload = (event) => {
       try {
         const json = JSON.parse(event.target?.result as string);
-        if (Array.isArray(json)) {
-          setAccounts(json);
+        
+        let importedAccounts: Account[] = [];
+
+        // Support for old schema (Object with accounts/incomes)
+        if (!Array.isArray(json) && typeof json === 'object') {
+          const oldAccounts = json.accounts || [];
+          const oldIncomes = json.incomes || [];
+
+          // Map expenses
+          const mappedExpenses = oldAccounts.map((a: any) => ({
+            id: a.id || crypto.randomUUID(),
+            title: a.name || a.title || 'Sem título',
+            amount: parseFloat(a.value || a.amount || 0),
+            type: 'expense' as const,
+            category: a.category || 'Outros',
+            isPaid: a.status === 'PAID' || !!a.isPaid,
+            isRecurring: !!a.isRecurrent || !!a.isRecurring,
+            month: a.paymentDate ? format(new Date(a.paymentDate), 'yyyy-MM') : format(new Date(), 'yyyy-MM'),
+            installments: a.isInstallment ? { 
+              current: a.currentInstallment || 1, 
+              total: a.totalInstallments || 1 
+            } : null,
+            createdAt: a.paymentDate || new Date().toISOString(),
+          }));
+
+          // Map incomes
+          const mappedIncomes = oldIncomes.map((i: any) => ({
+            id: i.id || crypto.randomUUID(),
+            title: i.name || 'Receita',
+            amount: parseFloat(i.value || 0),
+            type: 'income' as const,
+            category: 'Salário',
+            isPaid: true,
+            isRecurring: !!i.isRecurrent,
+            month: i.date ? format(new Date(i.date), 'yyyy-MM') : format(new Date(), 'yyyy-MM'),
+            installments: null,
+            createdAt: i.date || new Date().toISOString(),
+          }));
+
+          importedAccounts = [...mappedExpenses, ...mappedIncomes];
+        } 
+        // Support for new schema (Array of accounts)
+        else if (Array.isArray(json)) {
+          importedAccounts = json.map(a => ({
+            ...a,
+            month: a.month || format(new Date(a.createdAt || new Date()), 'yyyy-MM')
+          }));
+        }
+
+        if (importedAccounts.length > 0) {
+          setAccounts(importedAccounts);
           alert('Backup importado com sucesso!');
           setIsSettingsOpen(false);
         } else {
-          alert('Formato de backup inválido.');
+          alert('Formato de backup inválido ou vazio.');
         }
       } catch (err) {
+        console.error('Import error:', err);
         alert('Erro ao processar o arquivo JSON.');
       }
     };
@@ -954,6 +982,23 @@ export default function App() {
                       <Download size={20} />
                     </div>
                     <span className="font-bold text-slate-900 dark:text-white">Exportar CSV</span>
+                  </button>
+
+                  <button 
+                    onClick={() => {
+                      if (confirm('Tem certeza que deseja apagar TODOS os dados? Esta ação não pode ser desfeita.')) {
+                        setAccounts([]);
+                        localStorage.removeItem('tatufinancas_accounts');
+                        alert('Dados removidos com sucesso!');
+                        setIsSettingsOpen(false);
+                      }
+                    }}
+                    className="w-full flex items-center gap-4 p-4 bg-rose-500/5 hover:bg-rose-500/10 rounded-2xl transition-all border border-transparent hover:border-rose-500/20 shadow-xs group"
+                  >
+                    <div className="p-2.5 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 text-rose-600 dark:text-rose-400 group-hover:bg-rose-600 group-hover:text-white transition-all">
+                      <Trash2 size={20} />
+                    </div>
+                    <span className="font-bold text-rose-600 dark:text-rose-400 transition-colors">Zerar Todos os Dados</span>
                   </button>
                 </div>
               </div>
