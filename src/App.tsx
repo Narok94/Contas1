@@ -105,14 +105,14 @@ const StatCard = ({ title, value, icon, color }: StatCardProps) => (
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     whileHover={{ scale: 1.02 }}
-    className="bg-white dark:bg-gray-800 p-4 min-w-[180px] flex-1 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-3 transition-all hover:shadow-md"
+    className="bg-white dark:bg-gray-800 p-2.5 sm:p-4 min-w-[140px] flex-1 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-2 sm:gap-3 transition-all hover:shadow-md"
   >
-    <div className={cn("p-2.5 rounded-xl shrink-0", color)}>
-      {React.cloneElement(icon as React.ReactElement, { size: 18 })}
+    <div className={cn("p-2 sm:p-2.5 rounded-xl shrink-0", color)}>
+      {React.cloneElement(icon as React.ReactElement, { size: 16 })}
     </div>
     <div className="min-w-0">
-      <p className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider truncate">{title}</p>
-      <p className="text-base font-black text-gray-900 dark:text-white truncate">{formatCurrency(value)}</p>
+      <p className="text-[8px] sm:text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider truncate">{title}</p>
+      <p className="text-sm sm:text-base font-black text-gray-900 dark:text-white truncate">{formatCurrency(value)}</p>
     </div>
   </motion.div>
 );
@@ -327,43 +327,43 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans pb-20 transition-colors duration-300">
       {/* Header / Summary Section */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 p-4 shadow-sm sticky top-0 z-30">
-        <div className="max-w-6xl mx-auto space-y-4">
-          <div className="flex items-center justify-between mb-2">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 p-2 sm:p-4 shadow-sm sticky top-0 z-30">
+        <div className="max-w-screen-2xl mx-auto space-y-2 sm:space-y-4">
+          <div className="flex items-center justify-between mb-1 sm:mb-2 px-1">
             <div className="flex items-center gap-2">
-              <div className="p-2 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-100 dark:shadow-none">
-                <CreditCard size={18} />
+              <div className="p-1.5 bg-indigo-600 rounded-lg text-white shadow-lg shadow-indigo-100 dark:shadow-none">
+                <CreditCard size={14} />
               </div>
-              <h1 className="text-lg font-black tracking-tighter text-gray-900 dark:text-white">Tatu Finanças</h1>
+              <h1 className="text-base sm:text-lg font-black tracking-tighter text-gray-900 dark:text-white">Tatu Finanças</h1>
             </div>
           </div>
           
           {/* Month Selector + Settings Trigger */}
-          <div className="flex items-center gap-3">
-            <div className="flex-1 flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-2 rounded-2xl border border-gray-100 dark:border-gray-700">
-              <button onClick={prevMonth} className="p-2 hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm rounded-xl transition-all text-gray-400 dark:text-gray-500 hover:text-indigo-600 active:scale-95">
-                <ChevronLeft size={20} />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex-1 flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-1.5 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-gray-700">
+              <button onClick={prevMonth} className="p-1.5 sm:p-2 hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm rounded-lg sm:rounded-xl transition-all text-gray-400 dark:text-gray-500 hover:text-indigo-600 active:scale-95">
+                <ChevronLeft size={18} />
               </button>
               <div className="flex flex-col items-center">
-                <h2 className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-widest flex items-center gap-2">
-                  <Calendar size={14} className="text-indigo-500" />
+                <h2 className="text-[10px] sm:text-xs font-black text-gray-900 dark:text-white uppercase tracking-widest flex items-center gap-1.5 sm:gap-2">
+                  <Calendar size={12} className="text-indigo-500" />
                   {format(selectedDate, 'MMMM yyyy', { locale: ptBR })}
                 </h2>
               </div>
-              <button onClick={nextMonth} className="p-2 hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm rounded-xl transition-all text-gray-400 dark:text-gray-500 hover:text-indigo-600 active:scale-95">
-                <ChevronRight size={20} />
+              <button onClick={nextMonth} className="p-1.5 sm:p-2 hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm rounded-lg sm:rounded-xl transition-all text-gray-400 dark:text-gray-500 hover:text-indigo-600 active:scale-95">
+                <ChevronRight size={18} />
               </button>
             </div>
             <button 
               onClick={() => setIsSettingsOpen(true)}
-              className="p-3.5 bg-gray-50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 hover:text-indigo-600 hover:bg-white dark:hover:bg-gray-700 rounded-2xl border border-gray-100 dark:border-gray-700 transition-all shadow-sm active:scale-95"
+              className="p-2.5 sm:p-3.5 bg-gray-50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 hover:text-indigo-600 hover:bg-white dark:hover:bg-gray-700 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-gray-700 transition-all shadow-sm active:scale-95"
             >
-              <Settings size={20} />
+              <Settings size={18} />
             </button>
           </div>
 
           {/* Top: Summary Cards Row */}
-          <div className="flex flex-nowrap overflow-x-auto pb-2 gap-4 no-scrollbar lg:justify-between">
+          <div className="flex flex-nowrap overflow-x-auto pb-1 gap-2 sm:gap-4 no-scrollbar lg:grid lg:grid-cols-4 lg:pb-0">
             <StatCard 
               title="Total de Contas" 
               value={totalExpenses} 
@@ -393,7 +393,7 @@ export default function App() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 mt-8">
+      <main className="max-w-screen-2xl mx-auto px-4 mt-4 sm:mt-6">
         <AnimatePresence mode="wait">
           {activeTab === 'list' ? (
             <motion.div 
@@ -401,7 +401,7 @@ export default function App() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-32"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-32"
             >
               {sortedAccounts.length === 0 ? (
                 <div className="col-span-full bg-white dark:bg-gray-800 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-3xl p-20 text-center flex flex-col items-center justify-center">
@@ -430,44 +430,46 @@ export default function App() {
                     }}
                     key={account.id}
                     className={cn(
-                      "group bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border transition-all flex flex-col h-full min-h-[180px]",
+                      "group bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-2xl shadow-sm border transition-all flex flex-col h-full min-h-[160px]",
                       account.isPaid 
                         ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50/40 dark:bg-emerald-900/10 opacity-90 shadow-inner" 
                         : "border-gray-100 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-800 hover:shadow-lg"
                     )}
                   >
-                    <div className="flex justify-between items-start mb-4">
+                    <div className="flex justify-between items-start mb-3 sm:mb-4">
                       <span className={cn(
-                        "px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5",
+                        "px-2 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 sm:gap-1.5",
                         CATEGORY_COLORS[account.category] || "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
                       )}>
                         {getCategoryIcon(account.category)}
                         {account.category}
                       </span>
-                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-1">
                         <button 
                           onClick={() => openModal(account)}
-                          className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-gray-700 rounded-lg transition-colors border border-transparent shadow-sm"
+                          className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-gray-700 rounded-xl transition-all border border-transparent hover:border-gray-100 dark:hover:border-gray-600 shadow-sm"
+                          title="Editar"
                         >
-                          <Edit2 size={14} />
+                          <Edit2 size={16} />
                         </button>
                         <button 
                           onClick={() => deleteAccount(account.id)}
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-white dark:hover:bg-gray-700 rounded-lg transition-colors border border-transparent shadow-sm"
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-white dark:hover:bg-gray-700 rounded-xl transition-all border border-transparent hover:border-gray-100 dark:hover:border-gray-600 shadow-sm"
+                          title="Excluir"
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </div>
 
                     <div className="flex-1">
                       <h3 className={cn(
-                        "font-bold mb-2 leading-snug line-clamp-2",
+                        "font-bold mb-1 sm:mb-2 leading-tight sm:leading-snug line-clamp-1 sm:line-clamp-2",
                         account.isPaid ? "text-emerald-900 dark:text-emerald-400" : "text-gray-900 dark:text-white"
                       )}>{account.title}</h3>
                       <div className="flex items-baseline gap-2">
                         <span className={cn(
-                          "text-xl font-black tracking-tight",
+                          "text-lg sm:text-xl font-black tracking-tight",
                           account.type === 'income' ? "text-emerald-600" : (account.isPaid ? "text-emerald-700 dark:text-emerald-500" : "text-gray-900 dark:text-white")
                         )}>
                           {account.type === 'income' ? '+': '-'} {formatCurrency(account.amount)}
@@ -476,15 +478,15 @@ export default function App() {
 
                       {/* Installment Progress Bar */}
                       {account.installments && (
-                        <div className="mt-4 space-y-2">
+                        <div className="mt-3 sm:mt-4 space-y-1.5 sm:space-y-2">
                           <div className={cn(
-                            "flex justify-between text-lg font-black uppercase tracking-widest",
+                            "flex justify-between text-xs sm:text-sm font-black uppercase tracking-widest",
                             account.isPaid ? "text-emerald-600 dark:text-emerald-500" : "text-indigo-600 dark:text-indigo-400"
                           )}>
                             <span>Parcelas</span>
                             <span>{account.installments.current} / {account.installments.total}</span>
                           </div>
-                          <div className="w-full h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden border border-gray-50 dark:border-gray-600 shadow-inner">
+                          <div className="w-full h-2 sm:h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden border border-gray-50 dark:border-gray-600 shadow-inner">
                             <motion.div 
                               initial={{ width: 0 }}
                               animate={{ width: `${(account.installments.current / account.installments.total) * 100}%` }}
@@ -501,7 +503,7 @@ export default function App() {
                     </div>
 
                     <div className={cn(
-                      "flex items-center gap-3 pt-6 mt-4 border-t",
+                      "flex items-center gap-3 pt-4 sm:pt-6 mt-3 sm:mt-4 border-t",
                       account.isPaid ? "border-emerald-100 dark:border-emerald-800/50" : "border-gray-50 dark:border-gray-700"
                     )}>
                       <motion.button 
@@ -509,7 +511,7 @@ export default function App() {
                         whileHover={{ scale: 1.02 }}
                         onClick={() => togglePaid(account.id)}
                         className={cn(
-                          "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[11px] font-black transition-all",
+                          "flex-1 flex items-center justify-center gap-2 py-2 sm:py-2.5 rounded-xl text-[10px] sm:text-[11px] font-black transition-all",
                           account.isPaid 
                             ? "bg-emerald-600 text-white shadow-lg shadow-emerald-100 dark:shadow-none" 
                             : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-indigo-600 hover:text-white"
@@ -518,12 +520,14 @@ export default function App() {
                         {account.isPaid ? (
                           <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="flex items-center gap-2">
                             <CheckCircle size={14} />
-                            <span>PAGO</span>
+                            <span className="hidden sm:inline">PAGO</span>
+                            <span className="sm:hidden">OK</span>
                           </motion.div>
                         ) : (
                           <span className="flex items-center gap-2">
                             <Circle size={14} />
-                            <span>PAGAR</span>
+                            <span className="hidden sm:inline">PAGAR</span>
+                            <span className="sm:hidden">PAGAR</span>
                           </span>
                         )}
                       </motion.button>
