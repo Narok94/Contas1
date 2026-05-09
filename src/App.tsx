@@ -7,7 +7,7 @@ import {
   Circle, 
   TrendingUp, 
   TrendingDown, 
-  PieChart as PieChartIcon, 
+  PieChart as ChartIcon, 
   List, 
   Download,
   Calendar,
@@ -17,6 +17,8 @@ import {
   CreditCard,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  Filter,
   Settings,
   Sun,
   Moon,
@@ -30,7 +32,6 @@ import {
   Smartphone,
   Briefcase,
   DollarSign,
-  PieChart as ChartIcon,
   HelpCircle,
   ShieldCheck,
 } from 'lucide-react';
@@ -104,15 +105,15 @@ const StatCard = ({ title, value, icon, color }: StatCardProps) => (
   <motion.div 
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
-    whileHover={{ scale: 1.02 }}
-    className="bg-white dark:bg-gray-800 p-2.5 sm:p-4 min-w-[140px] flex-1 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-2 sm:gap-3 transition-all hover:shadow-md"
+    whileHover={{ y: -4, scale: 1.02 }}
+    className="bg-white dark:bg-slate-800/50 p-3 sm:p-5 min-w-[140px] flex-1 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-700/50 flex items-center gap-3 sm:gap-4 transition-all hover:shadow-xl hover:bg-white dark:hover:bg-slate-800"
   >
-    <div className={cn("p-2 sm:p-2.5 rounded-xl shrink-0", color)}>
-      {React.cloneElement(icon as React.ReactElement, { size: 16 })}
+    <div className={cn("p-2.5 sm:p-3 rounded-2xl shrink-0 shadow-sm", color)}>
+      {React.cloneElement(icon as React.ReactElement, { size: 20 })}
     </div>
     <div className="min-w-0">
-      <p className="text-[8px] sm:text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider truncate">{title}</p>
-      <p className="text-sm sm:text-base font-black text-gray-900 dark:text-white truncate">{formatCurrency(value)}</p>
+      <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] mb-0.5">{title}</p>
+      <p className="text-sm sm:text-lg font-black text-slate-900 dark:text-white leading-none">{formatCurrency(value)}</p>
     </div>
   </motion.div>
 );
@@ -125,6 +126,8 @@ export default function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [filterCategory, setFilterCategory] = useState<string | null>(null);
+  const [isFabOpen, setIsFabOpen] = useState(false);
 
   const currentMonthYear = format(selectedDate, 'yyyy-MM');
 
@@ -275,6 +278,8 @@ export default function App() {
     setAccounts(accounts.map(a => 
       a.id === id ? { ...a, isPaid: !a.isPaid } : a
     ));
+    
+    // Auto-scroll logic or sort will handle position
   };
 
   const handleExport = () => {
@@ -285,19 +290,26 @@ export default function App() {
   const prevMonth = () => setSelectedDate(subMonths(selectedDate, 1));
 
   // Calculations for SELECTED month
-  const filteredAccounts = accounts.filter(a => a.month === currentMonthYear);
+  const monthAccounts = accounts.filter(a => a.month === currentMonthYear);
+  
+  // Now main list only shows expenses as requested
+  const filteredAccounts = monthAccounts.filter(a => {
+    const isExpense = a.type === 'expense';
+    const matchesCategory = filterCategory ? a.category === filterCategory : true;
+    return isExpense && matchesCategory;
+  });
 
-  const totalExpenses = filteredAccounts
+  const totalExpenses = monthAccounts
     .filter(a => a.type === 'expense')
     .reduce((sum, a) => sum + a.amount, 0);
 
-  const totalPaid = filteredAccounts
+  const totalPaid = monthAccounts
     .filter(a => a.type === 'expense' && a.isPaid)
     .reduce((sum, a) => sum + a.amount, 0);
 
   const totalPending = totalExpenses - totalPaid;
 
-  const totalIncome = filteredAccounts
+  const totalIncome = monthAccounts
     .filter(a => a.type === 'income')
     .reduce((sum, a) => sum + a.amount, 0);
 
@@ -325,72 +337,159 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans pb-20 transition-colors duration-300">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans pb-32 transition-colors duration-300">
       {/* Header / Summary Section */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 p-2 sm:p-4 shadow-sm sticky top-0 z-30">
-        <div className="max-w-screen-2xl mx-auto space-y-2 sm:space-y-4">
-          <div className="flex items-center justify-between mb-1 sm:mb-2 px-1">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-indigo-600 rounded-lg text-white shadow-lg shadow-indigo-100 dark:shadow-none">
-                <CreditCard size={14} />
+      <header className="bg-slate-900 dark:bg-black border-b border-white/5 p-4 sm:p-6 shadow-2xl sticky top-0 z-40">
+        <div className="absolute inset-0 bg-linear-to-br from-indigo-500/10 via-transparent to-rose-500/5 pointer-events-none" />
+        
+        <div className="max-w-screen-2xl mx-auto space-y-5 relative z-10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-indigo-600 rounded-2xl text-white shadow-lg shadow-indigo-500/20 flex items-center justify-center">
+                <CreditCard size={22} />
               </div>
-              <h1 className="text-base sm:text-lg font-black tracking-tighter text-gray-900 dark:text-white">Tatu Finanças</h1>
+              <h1 className="text-xl font-black tracking-tighter text-white">Tatu Finanças</h1>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setIsSettingsOpen(true)}
+                className="p-3 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 rounded-2xl border border-white/10 transition-all shadow-sm active:scale-95"
+              >
+                <Settings size={22} />
+              </button>
             </div>
           </div>
           
-          {/* Month Selector + Settings Trigger */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="flex-1 flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-1.5 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-gray-700">
-              <button onClick={prevMonth} className="p-1.5 sm:p-2 hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm rounded-lg sm:rounded-xl transition-all text-gray-400 dark:text-gray-500 hover:text-indigo-600 active:scale-95">
-                <ChevronLeft size={18} />
-              </button>
-              <div className="flex flex-col items-center">
-                <h2 className="text-[10px] sm:text-xs font-black text-gray-900 dark:text-white uppercase tracking-widest flex items-center gap-1.5 sm:gap-2">
-                  <Calendar size={12} className="text-indigo-500" />
-                  {format(selectedDate, 'MMMM yyyy', { locale: ptBR })}
-                </h2>
+          <div className="flex items-center justify-between gap-4">
+            {/* Minimal Navigation & Filters Cluster */}
+            <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded-2xl border border-white/10">
+              {/* Month Selector */}
+              <div className="flex items-center gap-1 border-r border-white/10 pr-1 mr-1">
+                <button onClick={prevMonth} className="p-1.5 text-white/40 hover:text-white transition-colors">
+                  <ChevronLeft size={16} />
+                </button>
+                <span className="px-2 text-[10px] sm:text-xs font-black text-white uppercase tracking-[0.2em] min-w-[80px] text-center">
+                  {format(selectedDate, 'MMM yy', { locale: ptBR })}
+                </span>
+                <button onClick={nextMonth} className="p-1.5 text-white/40 hover:text-white transition-colors">
+                  <ChevronRight size={16} />
+                </button>
               </div>
-              <button onClick={nextMonth} className="p-1.5 sm:p-2 hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm rounded-lg sm:rounded-xl transition-all text-gray-400 dark:text-gray-500 hover:text-indigo-600 active:scale-95">
-                <ChevronRight size={18} />
-              </button>
+
+              {/* Category Filter Menu */}
+              <div className="relative group">
+                <button 
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                    filterCategory ? "bg-indigo-600 text-white shadow-lg" : "text-white/60 hover:text-white hover:bg-white/5"
+                  )}
+                >
+                  <Filter size={14} />
+                  <span className="hidden sm:inline">{filterCategory || 'Filtrar'}</span>
+                  <ChevronDown size={12} className={cn("transition-transform", filterCategory ? "rotate-180" : "")} />
+                </button>
+                
+                {/* Dropdown Menu */}
+                <div className="absolute top-full left-0 mt-2 w-48 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 p-2">
+                  <button 
+                    onClick={() => setFilterCategory(null)}
+                    className={cn(
+                      "w-full text-left px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all mb-1",
+                      filterCategory === null ? "bg-white/10 text-white" : "text-white/40 hover:text-white hover:bg-white/5"
+                    )}
+                  >
+                    Todas Categorias
+                  </button>
+                  {Object.keys(CATEGORY_COLORS).map(cat => (
+                    <button 
+                      key={cat}
+                      onClick={() => setFilterCategory(cat)}
+                      className={cn(
+                        "w-full text-left px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-3",
+                        filterCategory === cat ? "bg-white/10 text-white" : "text-white/40 hover:text-white hover:bg-white/5"
+                      )}
+                    >
+                      {getCategoryIcon(cat)}
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
-            <button 
-              onClick={() => setIsSettingsOpen(true)}
-              className="p-2.5 sm:p-3.5 bg-gray-50 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500 hover:text-indigo-600 hover:bg-white dark:hover:bg-gray-700 rounded-xl sm:rounded-2xl border border-gray-100 dark:border-gray-700 transition-all shadow-sm active:scale-95"
-            >
-              <Settings size={18} />
-            </button>
+
+            {/* View Switcher (Desktop Only) */}
+            <nav className="hidden sm:flex items-center bg-white/5 p-1 rounded-2xl border border-white/10">
+              <button 
+                onClick={() => setActiveTab('list')}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-[10px] font-black transition-all flex items-center gap-2 uppercase tracking-widest",
+                  activeTab === 'list' ? "bg-white text-slate-900 shadow-sm" : "text-white/60 hover:text-white"
+                )}
+              >
+                <List size={14} />
+                <span>Contas</span>
+              </button>
+              <button 
+                onClick={() => setActiveTab('stats')}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-[10px] font-black transition-all flex items-center gap-2 uppercase tracking-widest",
+                  activeTab === 'stats' ? "bg-white text-slate-900 shadow-sm" : "text-white/60 hover:text-white"
+                )}
+              >
+                <ChartIcon size={14} />
+                <span>Gráficos</span>
+              </button>
+            </nav>
           </div>
 
-          {/* Top: Summary Cards Row */}
-          <div className="flex flex-nowrap overflow-x-auto pb-1 gap-2 sm:gap-4 no-scrollbar lg:grid lg:grid-cols-4 lg:pb-0">
-            <StatCard 
-              title="Total de Contas" 
-              value={totalExpenses} 
-              icon={<TrendingDown />} 
-              color="bg-red-50 text-red-600"
-            />
-            <StatCard 
-              title="Já Pago" 
-              value={totalPaid} 
-              icon={<CheckCircle />} 
-              color="bg-emerald-50 text-emerald-600"
-            />
-            <StatCard 
-              title="Falta Pagar" 
-              value={totalPending} 
-              icon={<Calendar />} 
-              color="bg-amber-50 text-amber-600"
-            />
-            <StatCard 
-              title="Saldo" 
-              value={balance} 
-              icon={<TrendingUp />} 
-              color="bg-blue-50 text-blue-600"
-            />
+          {/* Top: Summary Cards Row (Dark Themed) */}
+          <div className="flex flex-nowrap overflow-x-auto pb-1 gap-3 no-scrollbar lg:grid lg:grid-cols-4">
+            <div className="bg-white/5 border border-white/10 p-4 rounded-2xl min-w-[140px] flex-1">
+              <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest mb-1">Receitas</p>
+              <p className="text-lg font-black text-emerald-400">{formatCurrency(totalIncome)}</p>
+            </div>
+            <div className="bg-white/5 border border-white/10 p-4 rounded-2xl min-w-[140px] flex-1">
+              <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest mb-1">Despesas</p>
+              <p className="text-lg font-black text-rose-400">{formatCurrency(totalExpenses)}</p>
+            </div>
+            <div className="bg-white/5 border border-white/10 p-4 rounded-2xl min-w-[140px] flex-1">
+              <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest mb-1">Pendente</p>
+              <p className="text-lg font-black text-amber-400">{formatCurrency(totalPending)}</p>
+            </div>
+            <div className="bg-white/5 border border-white/10 p-4 rounded-2xl min-w-[140px] flex-1">
+              <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest mb-1">Saldo</p>
+              <p className="text-lg font-black text-white">{formatCurrency(balance)}</p>
+            </div>
           </div>
         </div>
       </header>
+
+      {/* Mobile Navigation (Subtle) */}
+      <div className="sm:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
+        <nav className="flex items-center bg-slate-900/90 backdrop-blur-xl p-1.5 rounded-2xl border border-white/10 shadow-2xl">
+          <button 
+            onClick={() => setActiveTab('list')}
+            className={cn(
+              "px-5 py-2.5 rounded-xl text-[10px] font-black transition-all flex items-center gap-2",
+              activeTab === 'list' ? "bg-white text-slate-900 shadow-sm" : "text-white/60 hover:text-white"
+            )}
+          >
+            <List size={16} />
+            <span>CONTAS</span>
+          </button>
+          <button 
+            onClick={() => setActiveTab('stats')}
+            className={cn(
+              "px-5 py-2.5 rounded-xl text-[10px] font-black transition-all flex items-center gap-2",
+              activeTab === 'stats' ? "bg-white text-slate-900 shadow-sm" : "text-white/60 hover:text-white"
+            )}
+          >
+            <ChartIcon size={16} />
+            <span>GRÁFICOS</span>
+          </button>
+        </nav>
+      </div>
 
       {/* Main Content */}
       <main className="max-w-screen-2xl mx-auto px-4 mt-4 sm:mt-6">
@@ -421,40 +520,48 @@ export default function App() {
                 sortedAccounts.map(account => (
                   <motion.div 
                     layout
-                    initial={{ opacity: 0, scale: 0.9 }}
+                    initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ 
-                      layout: { type: "spring", stiffness: 300, damping: 30 },
+                      layout: { type: "spring", stiffness: 350, damping: 30 },
                       opacity: { duration: 0.2 }
                     }}
                     key={account.id}
                     className={cn(
-                      "group bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-2xl shadow-sm border transition-all flex flex-col h-full min-h-[160px]",
+                      "group bg-white dark:bg-slate-800 p-4 sm:p-5 rounded-[2rem] shadow-sm border transition-all flex flex-col h-full min-h-[160px] relative overflow-hidden",
                       account.isPaid 
-                        ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50/40 dark:bg-emerald-900/10 opacity-90 shadow-inner" 
-                        : "border-gray-100 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-800 hover:shadow-lg"
+                        ? "border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 opacity-70 grayscale-[0.3] shadow-inner" 
+                        : account.type === 'income' 
+                          ? "border-emerald-100 dark:border-emerald-900/50 hover:border-emerald-400 hover:shadow-xl hover:shadow-emerald-100/20"
+                          : "border-slate-100 dark:border-slate-700 hover:border-indigo-400 hover:shadow-xl active:scale-[0.98]"
                     )}
                   >
-                    <div className="flex justify-between items-start mb-3 sm:mb-4">
+                    {/* Semantic side bar */}
+                    <div className={cn(
+                      "absolute top-0 left-0 w-1.5 h-full transition-colors duration-500",
+                      account.isPaid ? "bg-slate-300 dark:bg-slate-700" : (account.type === 'income' ? "bg-emerald-500" : "bg-indigo-600")
+                    )} />
+
+                    <div className="flex justify-between items-start mb-3 sm:mb-4 px-1">
                       <span className={cn(
-                        "px-2 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 sm:gap-1.5",
-                        CATEGORY_COLORS[account.category] || "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                        "px-3 py-1 rounded-xl text-[9px] sm:text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 border shadow-xs transition-colors",
+                        CATEGORY_COLORS[account.category] || "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400 border-transparent"
                       )}>
                         {getCategoryIcon(account.category)}
                         {account.category}
                       </span>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1.5">
                         <button 
                           onClick={() => openModal(account)}
-                          className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-gray-700 rounded-xl transition-all border border-transparent hover:border-gray-100 dark:hover:border-gray-600 shadow-sm"
+                          className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-all border border-transparent hover:border-slate-100 dark:hover:border-slate-600 shadow-xs"
                           title="Editar"
                         >
                           <Edit2 size={16} />
                         </button>
                         <button 
                           onClick={() => deleteAccount(account.id)}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-white dark:hover:bg-gray-700 rounded-xl transition-all border border-transparent hover:border-gray-100 dark:hover:border-gray-600 shadow-sm"
+                          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl transition-all border border-transparent hover:border-slate-100 dark:hover:border-slate-600 shadow-xs"
                           title="Excluir"
                         >
                           <Trash2 size={16} />
@@ -462,15 +569,15 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div className="flex-1">
+                    <div className="flex-1 px-1">
                       <h3 className={cn(
-                        "font-bold mb-1 sm:mb-2 leading-tight sm:leading-snug line-clamp-1 sm:line-clamp-2",
-                        account.isPaid ? "text-emerald-900 dark:text-emerald-400" : "text-gray-900 dark:text-white"
+                        "font-bold mb-1 sm:mb-2 leading-tight sm:leading-snug line-clamp-1 sm:line-clamp-2 transition-colors",
+                        account.isPaid ? "text-slate-500 dark:text-slate-500" : "text-slate-900 dark:text-white"
                       )}>{account.title}</h3>
                       <div className="flex items-baseline gap-2">
                         <span className={cn(
-                          "text-lg sm:text-xl font-black tracking-tight",
-                          account.type === 'income' ? "text-emerald-600" : (account.isPaid ? "text-emerald-700 dark:text-emerald-500" : "text-gray-900 dark:text-white")
+                          "text-xl sm:text-2xl font-black tracking-tighter transition-colors",
+                          account.type === 'income' ? "text-emerald-600" : (account.isPaid ? "text-slate-500" : "text-slate-900 dark:text-white")
                         )}>
                           {account.type === 'income' ? '+': '-'} {formatCurrency(account.amount)}
                         </span>
@@ -478,24 +585,30 @@ export default function App() {
 
                       {/* Installment Progress Bar */}
                       {account.installments && (
-                        <div className="mt-3 sm:mt-4 space-y-1.5 sm:space-y-2">
+                        <div className="mt-4 sm:mt-5 space-y-2">
                           <div className={cn(
-                            "flex justify-between text-xs sm:text-sm font-black uppercase tracking-widest",
-                            account.isPaid ? "text-emerald-600 dark:text-emerald-500" : "text-indigo-600 dark:text-indigo-400"
+                            "flex justify-between text-[10px] font-bold uppercase tracking-widest transition-colors",
+                            account.isPaid ? "text-slate-400" : "text-slate-500 dark:text-slate-400"
                           )}>
-                            <span>Parcelas</span>
-                            <span>{account.installments.current} / {account.installments.total}</span>
+                            <span className="flex items-center gap-1.5 h-4">
+                              <Layers size={12} className="opacity-60" /> Parcela
+                            </span>
+                            <span className="font-black text-slate-900 dark:text-slate-200">
+                              {account.installments.current} / {account.installments.total}
+                            </span>
                           </div>
-                          <div className="w-full h-2 sm:h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden border border-gray-50 dark:border-gray-600 shadow-inner">
+                          <div className="w-full h-2 sm:h-2.5 bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden border border-slate-50 dark:border-white/5 shadow-inner relative">
                             <motion.div 
                               initial={{ width: 0 }}
                               animate={{ width: `${(account.installments.current / account.installments.total) * 100}%` }}
                               className={cn(
                                 "h-full rounded-full transition-all relative overflow-hidden",
-                                account.isPaid ? "bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.4)]" : "bg-indigo-500 shadow-[0_0_12px_rgba(99,102,241,0.4)]"
+                                account.isPaid 
+                                  ? "bg-slate-400 dark:bg-slate-600" 
+                                  : (account.type === 'income' ? "bg-emerald-500" : "bg-indigo-600")
                               )} 
                             >
-                              <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent animate-shimmer" style={{ backgroundSize: '200% 100%' }} />
+                              {!account.isPaid && <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/30 to-transparent animate-shimmer" style={{ backgroundSize: '200% 100%' }} />}
                             </motion.div>
                           </div>
                         </div>
@@ -503,33 +616,45 @@ export default function App() {
                     </div>
 
                     <div className={cn(
-                      "flex items-center gap-3 pt-4 sm:pt-6 mt-3 sm:mt-4 border-t",
-                      account.isPaid ? "border-emerald-100 dark:border-emerald-800/50" : "border-gray-50 dark:border-gray-700"
+                      "flex items-center gap-3 pt-4 sm:pt-6 mt-3 sm:mt-4 border-t transition-colors",
+                      account.isPaid ? "border-slate-100 dark:border-slate-700/50" : "border-slate-50 dark:border-slate-700"
                     )}>
                       <motion.button 
                         whileTap={{ scale: 0.95 }}
                         whileHover={{ scale: 1.02 }}
                         onClick={() => togglePaid(account.id)}
                         className={cn(
-                          "flex-1 flex items-center justify-center gap-2 py-2 sm:py-2.5 rounded-xl text-[10px] sm:text-[11px] font-black transition-all",
+                          "flex-1 flex items-center justify-center gap-2 py-2.5 sm:py-3 rounded-2xl text-[10px] sm:text-[11px] font-black transition-all shadow-sm",
                           account.isPaid 
-                            ? "bg-emerald-600 text-white shadow-lg shadow-emerald-100 dark:shadow-none" 
-                            : "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-indigo-600 hover:text-white"
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20" 
+                            : (account.type === 'income' 
+                                ? "bg-emerald-600 text-white shadow-emerald-100 dark:shadow-none hover:bg-emerald-700" 
+                                : "bg-indigo-600 text-white shadow-indigo-100 dark:shadow-none hover:bg-indigo-700")
                         )}
                       >
-                        {account.isPaid ? (
-                          <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} className="flex items-center gap-2">
-                            <CheckCircle size={14} />
-                            <span className="hidden sm:inline">PAGO</span>
-                            <span className="sm:hidden">OK</span>
-                          </motion.div>
-                        ) : (
-                          <span className="flex items-center gap-2">
-                            <Circle size={14} />
-                            <span className="hidden sm:inline">PAGAR</span>
-                            <span className="sm:hidden">PAGAR</span>
-                          </span>
-                        )}
+                        <AnimatePresence mode="wait">
+                          {account.isPaid ? (
+                            <motion.div 
+                              key="paid"
+                              initial={{ scale: 0.8, opacity: 0 }} 
+                              animate={{ scale: 1, opacity: 1 }} 
+                              className="flex items-center gap-2 capitalize"
+                            >
+                              <CheckCircle size={14} />
+                              <span>Pago</span>
+                            </motion.div>
+                          ) : (
+                            <motion.div 
+                              key="unpaid"
+                              initial={{ scale: 0.8, opacity: 0 }} 
+                              animate={{ scale: 1, opacity: 1 }} 
+                              className="flex items-center gap-2 uppercase tracking-widest"
+                            >
+                              {account.type === 'income' ? <Plus size={14} /> : <Circle size={14} />}
+                              <span>{account.type === 'income' ? 'Recebido' : 'Pagar'}</span>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </motion.button>
                       <div className="flex gap-2">
                         {account.isRecurring && <Layers size={14} className={account.isPaid ? "text-emerald-400" : "text-indigo-400"} title="Recorrente" />}
@@ -550,28 +675,29 @@ export default function App() {
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Cash Flow Chart */}
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700">
-                  <h3 className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase mb-6 flex items-center gap-2 tracking-widest">
-                    <TrendingUp size={14} />
-                    Fluxo de Caixa Mensal
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-white/5 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 blur-3xl pointer-events-none" />
+                  <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase mb-6 flex items-center gap-2.5 tracking-[0.2em]">
+                    <TrendingUp size={16} className="text-emerald-500" />
+                    Fluxo de Caixa
                   </h3>
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={cashFlowData}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? "#374151" : "#f0f0f0"} />
-                        <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={10} fontWeight={700} stroke={isDarkMode ? "#9ca3af" : "#4b5563"} />
-                        <YAxis axisLine={false} tickLine={false} fontSize={10} fontWeight={700} tickFormatter={(val) => `R$${val}`} stroke={isDarkMode ? "#9ca3af" : "#4b5563"} />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? "#334155" : "#f1f5f9"} />
+                        <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={10} fontWeight={700} stroke={isDarkMode ? "#94a3b8" : "#64748b"} />
+                        <YAxis axisLine={false} tickLine={false} fontSize={10} fontWeight={700} tickFormatter={(val) => `R$${val}`} stroke={isDarkMode ? "#94a3b8" : "#64748b"} />
                         <Tooltip 
                           cursor={{ fill: 'rgba(0,0,0,0.02)' }}
                           contentStyle={{ 
-                            borderRadius: '16px', 
+                            borderRadius: '24px', 
                             border: 'none', 
-                            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
-                            backgroundColor: isDarkMode ? '#1f2937' : '#fff',
+                            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)',
+                            backgroundColor: isDarkMode ? '#0f172a' : '#fff',
                             color: isDarkMode ? '#fff' : '#000'
                           }}
                         />
-                        <Bar dataKey="value" radius={[10, 10, 0, 0]} barSize={40}>
+                        <Bar dataKey="value" radius={[12, 12, 0, 0]} barSize={48}>
                           {cashFlowData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.fill} />
                           ))}
@@ -582,19 +708,20 @@ export default function App() {
                 </div>
 
                 {/* Categories Chart */}
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700">
-                  <h3 className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase mb-6 flex items-center gap-2 tracking-widest">
-                    <PieChartIcon size={14} />
-                    Gastos por Categoria
+                <div className="bg-white dark:bg-slate-800 p-6 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-white/5 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/5 blur-3xl pointer-events-none" />
+                  <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase mb-6 flex items-center gap-2.5 tracking-[0.2em]">
+                    <ChartIcon size={16} className="text-indigo-500" />
+                    Por Categoria
                   </h3>
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={categoryData}
-                          innerRadius={60}
-                          outerRadius={85}
-                          paddingAngle={8}
+                          innerRadius={65}
+                          outerRadius={90}
+                          paddingAngle={6}
                           dataKey="value"
                         >
                           {categoryData.map((entry, index) => (
@@ -604,22 +731,22 @@ export default function App() {
                                 '#6366f1', // Indigo
                                 '#10b981', // Emerald
                                 '#f59e0b', // Amber
-                                '#ef4444', // Red
+                                '#f43f5e', // Rose
                                 '#ec4899', // Pink
                                 '#8b5cf6', // Violet
                                 '#06b6d4', // Cyan
-                                '#4b5563'  // Gray
+                                '#64748b'  // Slate
                               ][index % 8]} 
                             />
                           ))}
                         </Pie>
                         <Tooltip 
                           contentStyle={{ 
-                            borderRadius: '16px', 
+                            borderRadius: '24px', 
                             border: 'none', 
-                            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
-                            backgroundColor: isDarkMode ? '#1f2937' : '#fff',
-                            color: isDarkMode ? '#f3f4f6' : '#111827'
+                            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)',
+                            backgroundColor: isDarkMode ? '#0f172a' : '#fff',
+                            color: isDarkMode ? '#f8fafc' : '#0f172a'
                           }}
                           itemStyle={{ color: isDarkMode ? '#fff' : '#000' }}
                         />
@@ -629,35 +756,53 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Balance Summary */}
-              <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700">
-                <div className="flex flex-col md:flex-row gap-12 items-center">
-                  <div className="flex-1 space-y-6 w-full">
+              {/* Balance Summary Card */}
+              <div className="bg-white dark:bg-slate-800 p-6 sm:p-10 rounded-[3rem] shadow-sm border border-slate-100 dark:border-white/5 overflow-hidden relative">
+                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-500 via-indigo-500 to-rose-500 opacity-50" />
+                <div className="flex flex-col lg:flex-row gap-8 lg:gap-16 items-center">
+                  <div className="flex-1 space-y-8 w-full">
                     <div className="flex justify-between items-end">
                       <div>
-                        <h4 className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Saúde Financeira</h4>
-                        <p className="text-xl font-black text-gray-900 dark:text-white">Comprometimento de Renda</p>
+                        <h4 className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em] mb-2">Monitor de Saúde</h4>
+                        <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">Comprometimento</p>
                       </div>
-                      <span className={cn(
-                        "text-2xl font-black",
-                        (totalExpenses/totalIncome) > 0.8 ? "text-red-500" : "text-indigo-600 dark:text-indigo-400"
-                      )}>{totalIncome > 0 ? Math.round((totalExpenses/totalIncome) * 100) : 0}%</span>
+                      <div className="text-right">
+                        <span className={cn(
+                          "text-3xl sm:text-4xl font-black transition-colors leading-none",
+                          (totalExpenses/totalIncome) > 0.8 ? "text-rose-500" : "text-indigo-600 dark:text-indigo-400"
+                        )}>{totalIncome > 0 ? Math.round((totalExpenses/totalIncome) * 100) : 0}%</span>
+                      </div>
                     </div>
-                    <div className="w-full h-4 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${Math.min(100, totalIncome > 0 ? (totalExpenses/totalIncome) * 100 : 0)}%` }}
-                        className={cn(
-                          "h-full rounded-full transition-all",
-                          (totalExpenses/totalIncome) > 0.8 ? "bg-red-500" : "bg-indigo-600 dark:bg-indigo-500"
-                        )}
-                      />
+                    
+                    <div className="relative pt-2">
+                      <div className="w-full h-4 bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden border border-slate-50 dark:border-white/5 shadow-inner">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${Math.min(100, totalIncome > 0 ? (totalExpenses/totalIncome) * 100 : 0)}%` }}
+                          className={cn(
+                            "h-full rounded-full transition-all relative overflow-hidden",
+                            (totalExpenses/totalIncome) > 0.8 ? "bg-rose-500" : "bg-indigo-600 dark:bg-indigo-500"
+                          )}
+                        >
+                          <div className="absolute inset-0 bg-white/20 animate-shimmer" style={{ backgroundSize: '100% 100%' }} />
+                        </motion.div>
+                      </div>
+                      <div className="flex justify-between mt-3 px-1">
+                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Ideal (&lt;50%)</span>
+                        <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Alerta (70%)</span>
+                        <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest">Crítico (90%)</span>
+                      </div>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Recomendamos manter seus gastos fixos abaixo de 70% da renda mensal para manter uma reserva de emergência saudável.</p>
+                    
+                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-2xl px-1">
+                      Para uma vida financeira sustentável, procure manter seus gastos fixos e variáveis abaixo de 70% da sua renda mensal. Isso permite construir uma reserva para imprevistos e investimentos.
+                    </p>
                   </div>
-                  <div className="md:w-72 text-center p-10 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-3xl border border-indigo-100 dark:border-indigo-800/50 shadow-inner">
-                    <p className="text-[10px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest mb-2">Saldo Atual</p>
-                    <p className="text-4xl font-black text-indigo-900 dark:text-indigo-300 tracking-tighter">{formatCurrency(balance)}</p>
+                  
+                  <div className="w-full lg:w-80 text-center p-8 sm:p-12 bg-slate-50/50 dark:bg-slate-900/40 rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-inner flex flex-col justify-center">
+                    <p className="text-[11px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-[0.2em] mb-3">Disponível Agora</p>
+                    <p className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tighter mb-1 leading-none">{formatCurrency(balance)}</p>
+                    <p className="text-xs text-slate-400 font-bold mt-4">Referente a {format(selectedDate, 'MMM yyyy', { locale: ptBR })}</p>
                   </div>
                 </div>
               </div>
@@ -666,54 +811,17 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      {/* Optimized Floating Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 p-6 flex justify-center pointer-events-none">
-        <nav className="flex items-center gap-1 bg-white/90 dark:bg-gray-800/95 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 p-2 rounded-[2.5rem] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] pointer-events-auto ring-1 ring-black/5 flex-nowrap shrink-0">
-          <button 
-            onClick={() => setActiveTab('list')}
-            className={cn(
-              "px-6 py-3 rounded-2xl text-xs font-black transition-all flex items-center gap-3",
-              activeTab === 'list' 
-                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none" 
-                : "text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-white"
-            )}
-          >
-            <List size={18} />
-            <span className="uppercase tracking-widest hidden sm:inline">Contas</span>
-          </button>
-
-          <div className="px-1">
-            <button 
-              onClick={() => openModal()}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white w-14 h-14 flex items-center justify-center rounded-[1.25rem] font-black transition-all shadow-xl shadow-indigo-300 dark:shadow-none active:scale-90 group relative"
-            >
-              <Plus size={28} className="group-hover:rotate-90 transition-transform" />
-            </button>
-          </div>
-
-          <button 
-            onClick={() => setActiveTab('stats')}
-            className={cn(
-              "px-6 py-3 rounded-2xl text-xs font-black transition-all flex items-center gap-3",
-              activeTab === 'stats' 
-                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none" 
-                : "text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-white"
-            )}
-          >
-            <PieChartIcon size={18} />
-            <span className="uppercase tracking-widest hidden sm:inline">Gráficos</span>
-          </button>
-
-          <div className="w-px h-8 bg-gray-100 dark:bg-gray-700 mx-1 hidden sm:block" />
-
-          <button 
-            onClick={handleExport}
-            className="w-12 h-12 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-2xl transition-all"
-            title="Exportar CSV"
-          >
-            <Download size={20} />
-          </button>
-        </nav>
+      {/* Floating Action Button (FAB) */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <motion.button 
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => { setType('expense'); setCategory(CATEGORIES.expense[0]); openModal(); }}
+          className="bg-indigo-600 text-white w-14 h-14 sm:w-16 sm:h-16 rounded-[1.75rem] sm:rounded-[2rem] shadow-2xl shadow-indigo-500/40 flex items-center justify-center transition-all relative overflow-hidden group"
+        >
+          <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+          <Plus size={32} className="transition-transform duration-300 relative z-10 group-hover:rotate-90" />
+        </motion.button>
       </div>
 
       {/* Settings Modal */}
@@ -725,82 +833,133 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsSettingsOpen(false)}
-              className="absolute inset-0 bg-gray-900/60 backdrop-blur-md"
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
             />
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-sm bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-2xl p-8 border border-gray-100 dark:border-gray-800"
+              className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl p-6 sm:p-8 border border-white/20 dark:border-white/5"
             >
               <div className="flex justify-between items-center mb-8">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 px-1">
                   <div className="p-3 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-200 dark:shadow-none text-white">
                     <CreditCard size={24} />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-black text-gray-900 dark:text-white">Ajustes</h2>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm">Personalize sua experiência</p>
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">Ajustes</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs">Personalize sua experiência</p>
                   </div>
                 </div>
                 <button 
                   onClick={() => setIsSettingsOpen(false)}
-                  className="p-3 bg-gray-50 dark:bg-gray-700 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-white rounded-2xl transition-colors"
+                  className="p-3 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-white rounded-2xl transition-colors border border-slate-100 dark:border-slate-700 shadow-sm"
                 >
                   <X size={20} />
                 </button>
               </div>
 
-              <div className="space-y-4">
-                <button 
-                  onClick={toggleTheme}
-                  className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-2xl transition-all group"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="p-2.5 bg-white dark:bg-gray-800 rounded-xl shadow-sm text-indigo-600 dark:text-indigo-400">
-                      {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] pl-1">Visual</h3>
+                  <button 
+                    onClick={toggleTheme}
+                    className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 rounded-2xl transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700 shadow-xs group"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="p-2.5 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 text-indigo-600 dark:text-indigo-400">
+                        {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+                      </div>
+                      <span className="font-bold text-slate-900 dark:text-white">Tema {isDarkMode ? 'Claro' : 'Escuro'}</span>
                     </div>
-                    <span className="font-bold text-gray-900 dark:text-white">Tema {isDarkMode ? 'Claro' : 'Escuro'}</span>
-                  </div>
-                  <div className={cn(
-                    "w-12 h-6 rounded-full transition-colors relative",
-                    isDarkMode ? "bg-indigo-600" : "bg-gray-300 dark:bg-gray-500"
-                  )}>
                     <div className={cn(
-                      "absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform",
-                      isDarkMode ? "translate-x-6" : "translate-x-0"
-                    )} />
-                  </div>
-                </button>
-
-                <div className="relative">
-                  <input 
-                    type="file" 
-                    accept=".json"
-                    onChange={handleImportJSON}
-                    className="absolute inset-0 opacity-0 cursor-pointer"
-                  />
-                  <div className="w-full flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-2xl transition-all">
-                    <div className="p-2.5 bg-white dark:bg-gray-800 rounded-xl shadow-sm text-indigo-600 dark:text-indigo-400">
-                      <Upload size={20} />
+                      "w-12 h-6 rounded-full transition-colors relative",
+                      isDarkMode ? "bg-indigo-600" : "bg-slate-300 dark:bg-slate-600"
+                    )}>
+                      <div className={cn(
+                        "absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow-sm",
+                        isDarkMode ? "translate-x-6" : "translate-x-0"
+                      )} />
                     </div>
-                    <span className="font-bold text-gray-900 dark:text-white">Importar Backup JSON</span>
+                  </button>
+                </div>
+
+                {/* Manage Incomes (Receitas) */}
+                <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-white/5">
+                  <div className="flex items-center justify-between px-1">
+                    <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Entradas (Receitas)</h3>
+                    <button 
+                      onClick={() => { setType('income'); setCategory(CATEGORIES.income[0]); openModal(); setIsSettingsOpen(false); }}
+                      className="p-1 px-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg hover:bg-emerald-500/20 transition-all flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest"
+                    >
+                      <Plus size={14} />
+                      Novo
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1 no-scrollbar">
+                    {monthAccounts.filter(a => a.type === 'income').length > 0 ? (
+                      monthAccounts.filter(a => a.type === 'income').map(income => (
+                        <div key={income.id} className="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-100 dark:border-white/5 group">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-xl group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                              <TrendingUp size={16} />
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-slate-900 dark:text-white tracking-tight">{income.title}</p>
+                              <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest">{income.category}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs font-black text-emerald-500">{formatCurrency(income.amount)}</span>
+                            <button 
+                              onClick={() => { setEditingAccount(income); setIsModalOpen(true); setIsSettingsOpen(false); }}
+                              className="p-1.5 text-slate-300 hover:text-indigo-500 transition-colors"
+                            >
+                              <Settings size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 border-2 border-dashed border-slate-100 dark:border-white/5 rounded-2xl">
+                        <p className="text-xs text-slate-400 font-medium">Nenhuma receita este mês.</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <button 
-                  onClick={handleExport}
-                  className="w-full flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-2xl transition-all"
-                >
-                  <div className="p-2.5 bg-white dark:bg-gray-800 rounded-xl shadow-sm text-indigo-600 dark:text-indigo-400">
-                    <Download size={20} />
+                <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-white/5">
+                  <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] pl-1">Dados</h3>
+                  <div className="relative">
+                    <input 
+                      type="file" 
+                      accept=".json"
+                      onChange={handleImportJSON}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
+                    <div className="w-full flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 rounded-2xl transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700 shadow-xs">
+                      <div className="p-2.5 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 text-indigo-600 dark:text-indigo-400">
+                        <Upload size={20} />
+                      </div>
+                      <span className="font-bold text-slate-900 dark:text-white">Importar Backup</span>
+                    </div>
                   </div>
-                  <span className="font-bold text-gray-900 dark:text-white">Exportar CSV</span>
-                </button>
+
+                  <button 
+                    onClick={handleExport}
+                    className="w-full flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 rounded-2xl transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700 shadow-xs"
+                  >
+                    <div className="p-2.5 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 text-indigo-600 dark:text-indigo-400">
+                      <Download size={20} />
+                    </div>
+                    <span className="font-bold text-slate-900 dark:text-white">Exportar CSV</span>
+                  </button>
+                </div>
               </div>
 
               <div className="mt-12 text-center">
-                <p className="text-[10px] font-black text-gray-300 dark:text-gray-600 uppercase tracking-[0.2em]">Tatu Finanças v2.0.0 • 2026</p>
+                <p className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[0.25em]">Tatu Finanças v2.0.0 • 2026</p>
               </div>
             </motion.div>
           </div>
@@ -810,35 +969,43 @@ export default function App() {
       {/* Account Modal */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={closeModal}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
             <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 100 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="bg-white dark:bg-gray-800 w-full max-w-md rounded-3xl shadow-2xl relative z-10 overflow-hidden border border-gray-100 dark:border-gray-700"
+              exit={{ opacity: 0, scale: 0.95, y: 100 }}
+              className="glass dark:dark-glass w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden border border-white/20 dark:border-white/5"
             >
-              <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-700/50">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">{editingAccount ? 'Editar Conta' : 'Nova Conta'}</h2>
-                <button onClick={closeModal} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full transition-colors text-gray-400 dark:text-gray-500">
+              <div className="p-6 border-b border-slate-100 dark:border-white/5 flex justify-between items-center bg-white/50 dark:bg-slate-900/50">
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "p-2.5 rounded-xl text-white shadow-lg",
+                    type === 'income' ? "bg-emerald-500 shadow-emerald-500/20" : "bg-rose-500 shadow-rose-500/20"
+                  )}>
+                    {type === 'income' ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+                  </div>
+                  <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">{editingAccount ? 'Editar Registro' : 'Novo Registro'}</h2>
+                </div>
+                <button onClick={closeModal} className="p-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all text-slate-400 dark:text-slate-500 shadow-sm border border-transparent hover:border-slate-200">
                   <X size={20} />
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                <div className="flex p-1 bg-gray-100 dark:bg-gray-700 rounded-xl mb-4 text-gray-900 dark:text-gray-100">
+              <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-5">
+                <div className="flex p-1.5 bg-slate-100 dark:bg-slate-900/50 rounded-2xl mb-4">
                   <button 
                     type="button"
                     onClick={() => { setType('expense'); setCategory(CATEGORIES.expense[0]); }}
                     className={cn(
-                      "flex-1 py-2 text-sm font-bold rounded-lg transition-all",
-                      type === 'expense' ? "bg-white dark:bg-gray-800 text-red-600 shadow-sm" : "text-gray-500 dark:text-gray-400"
+                      "flex-1 py-3 text-xs font-black rounded-xl transition-all uppercase tracking-widest",
+                      type === 'expense' ? "bg-white dark:bg-slate-800 text-rose-600 shadow-sm border border-rose-100 dark:border-rose-900/30" : "text-slate-400 dark:text-slate-500"
                     )}
                   >
                     Despesa
@@ -847,29 +1014,29 @@ export default function App() {
                     type="button"
                     onClick={() => { setType('income'); setCategory(CATEGORIES.income[0]); }}
                     className={cn(
-                      "flex-1 py-2 text-sm font-bold rounded-lg transition-all",
-                      type === 'income' ? "bg-white dark:bg-gray-800 text-emerald-600 shadow-sm" : "text-gray-500 dark:text-gray-400"
+                      "flex-1 py-3 text-xs font-black rounded-xl transition-all uppercase tracking-widest",
+                      type === 'income' ? "bg-white dark:bg-slate-800 text-emerald-600 shadow-sm border border-emerald-100 dark:border-emerald-900/30" : "text-slate-400 dark:text-slate-500"
                     )}
                   >
                     Receita
                   </button>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase ml-1">Título</label>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Descrição</label>
                   <input 
                     required
                     type="text" 
-                    placeholder="Ex: Aluguel, Mercado, Salário..."
+                    placeholder="Ex: Aluguel, Supermercado..."
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none transition-all font-medium"
+                    className="w-full px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 bg-white/50 dark:bg-slate-900/30 text-slate-900 dark:text-white outline-none transition-all font-bold placeholder:text-slate-300 dark:placeholder:text-slate-600"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase ml-1">Valor (R$)</label>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Valor (R$)</label>
                     <input 
                       required
                       type="number" 
@@ -877,25 +1044,33 @@ export default function App() {
                       placeholder="0,00"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none transition-all font-medium"
+                      className="w-full px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 bg-white/50 dark:bg-slate-900/30 text-slate-900 dark:text-white outline-none transition-all font-black placeholder:text-slate-300 dark:placeholder:text-slate-600"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase ml-1">Categoria</label>
-                    <select 
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none transition-all font-medium appearance-none"
-                    >
-                      {CATEGORIES[type].map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Categoria</label>
+                    <div className="relative">
+                      <select 
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        className="w-full px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 bg-white/50 dark:bg-slate-900/30 text-slate-900 dark:text-white outline-none transition-all font-bold appearance-none cursor-pointer"
+                      >
+                        {CATEGORIES[type].map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-3 pt-2">
-                  <label className="flex items-center gap-3 cursor-pointer group">
+                <div className="flex flex-col gap-4 pt-2">
+                  <label className="flex items-center justify-between p-4 bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-white/5 cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-all group">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 text-indigo-500">
+                        <Layers size={18} />
+                      </div>
+                      <span className="text-sm font-bold text-slate-700 dark:text-slate-300 tracking-tight">Registro Recorrente</span>
+                    </div>
                     <div className="relative">
                       <input 
                         type="checkbox" 
@@ -904,18 +1079,23 @@ export default function App() {
                         className="sr-only"
                       />
                       <div className={cn(
-                        "w-10 h-5 rounded-full transition-all",
-                        isRecurring ? "bg-indigo-600" : "bg-gray-200 dark:bg-gray-700"
+                        "w-11 h-6 rounded-full transition-all",
+                        isRecurring ? "bg-indigo-600" : "bg-slate-200 dark:bg-slate-700"
                       )} />
                       <div className={cn(
-                        "absolute top-1 left-1 bg-white w-3 h-3 rounded-full transition-all",
+                        "absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-all shadow-sm",
                         isRecurring ? "translate-x-5" : ""
                       )} />
                     </div>
-                    <span className="text-sm font-bold text-gray-700 dark:text-gray-300">Conta Recorrente</span>
                   </label>
 
-                  <label className="flex items-center gap-3 cursor-pointer group">
+                  <label className="flex items-center justify-between p-4 bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-white/5 cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-all group">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 text-amber-500">
+                        <Calendar size={18} />
+                      </div>
+                      <span className="text-sm font-bold text-slate-700 dark:text-slate-300 tracking-tight">Pagamento Parcelado</span>
+                    </div>
                     <div className="relative">
                       <input 
                         type="checkbox" 
@@ -924,48 +1104,60 @@ export default function App() {
                         className="sr-only"
                       />
                       <div className={cn(
-                        "w-10 h-5 rounded-full transition-all",
-                        hasInstallments ? "bg-indigo-600" : "bg-gray-200 dark:bg-gray-700"
+                        "w-11 h-6 rounded-full transition-all",
+                        hasInstallments ? "bg-indigo-600" : "bg-slate-200 dark:bg-slate-700"
                       )} />
                       <div className={cn(
-                        "absolute top-1 left-1 bg-white w-3 h-3 rounded-full transition-all",
+                        "absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-all shadow-sm",
                         hasInstallments ? "translate-x-5" : ""
                       )} />
                     </div>
-                    <span className="text-sm font-bold text-gray-700 dark:text-gray-300">Parcelado</span>
                   </label>
                 </div>
 
                 {hasInstallments && (
-                  <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase ml-1">Parcela Atual</label>
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="grid grid-cols-2 gap-4 pt-2 overflow-hidden"
+                  >
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Parcela Atual</label>
                       <input 
                         type="number" 
                         value={currentInstallment}
                         onChange={(e) => setCurrentInstallment(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 focus:border-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none font-medium"
+                        className="w-full px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 focus:border-indigo-500 bg-white/50 dark:bg-slate-900/30 text-slate-900 dark:text-white outline-none font-bold"
                       />
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase ml-1">Total Parcelas</label>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] ml-1">Total</label>
                       <input 
                         type="number" 
                         value={totalInstallments}
                         onChange={(e) => setTotalInstallments(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 focus:border-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white outline-none font-medium"
+                        className="w-full px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-700/50 focus:border-indigo-500 bg-white/50 dark:bg-slate-900/30 text-slate-900 dark:text-white outline-none font-bold"
                       />
                     </div>
-                  </div>
+                  </motion.div>
                 )}
 
-                <button 
-                  type="submit"
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-bold transition-all shadow-lg shadow-indigo-100 dark:shadow-none flex items-center justify-center gap-2 active:scale-[0.98] mt-4"
-                >
-                  <Plus size={20} />
-                  {editingAccount ? 'Salvar Alterações' : 'Criar Conta'}
-                </button>
+                <div className="pt-4 flex gap-3">
+                  <button 
+                    type="button"
+                    onClick={closeModal}
+                    className="flex-1 bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 py-4 rounded-[1.5rem] font-bold transition-all border border-slate-100 dark:border-white/5"
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    type="submit"
+                    className="flex-[2] bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-[1.5rem] font-black transition-all shadow-xl shadow-indigo-200 dark:shadow-none flex items-center justify-center gap-2 active:scale-[0.98]"
+                  >
+                    {editingAccount ? <CheckCircle size={18} /> : <Plus size={18} />}
+                    {editingAccount ? 'Salvar Mudanças' : 'Criar Registro'}
+                  </button>
+                </div>
               </form>
             </motion.div>
           </div>
