@@ -1014,13 +1014,21 @@ export default function App() {
                               <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest">{income.category}</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <span className="text-xs font-black text-emerald-500">{formatCurrency(income.amount)}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-black text-emerald-500 mr-1">{formatCurrency(income.amount)}</span>
                             <button 
-                              onClick={() => { setEditingAccount(income); setIsModalOpen(true); setIsSettingsOpen(false); }}
-                              className="p-1.5 text-slate-300 hover:text-indigo-500 transition-colors"
+                              onClick={() => { openModal(income); setIsSettingsOpen(false); }}
+                              className="p-1.5 text-slate-300 hover:text-indigo-500 transition-colors bg-white/5 dark:bg-white/5 rounded-lg border border-transparent hover:border-indigo-500/20"
+                              title="Editar"
                             >
-                              <Settings size={14} />
+                              <Edit2 size={14} />
+                            </button>
+                            <button 
+                              onClick={() => deleteAccount(income.id)}
+                              className="p-1.5 text-slate-300 hover:text-rose-500 transition-colors bg-white/5 dark:bg-white/5 rounded-lg border border-transparent hover:border-rose-500/20"
+                              title="Excluir"
+                            >
+                              <Trash2 size={14} />
                             </button>
                           </div>
                         </div>
