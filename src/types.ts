@@ -13,6 +13,8 @@ export interface Account {
   category: string;
   isPaid: boolean;
   isRecurring: boolean;
+  recurringStatus?: Record<string, boolean>; // month -> isPaid mapping
+  deletedAtMonth?: string; // Month (YYYY-MM) from which the account is deleted onwards
   installments: InstallmentInfo | null;
   createdAt: string;
   month: string; // Formato YYYY-MM

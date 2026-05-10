@@ -15,11 +15,28 @@ export function formatCurrency(value: number) {
 export function exportToCSV(data: any[], filename: string) {
   if (data.length === 0) return;
   
-  const headers = Object.keys(data[0]).join(',');
+  // Localized headers mapping
+  const headerMap: Record<string, string> = {
+    'title': 'Título',
+    'amount': 'Valor',
+    'type': 'Tipo',
+    'category': 'Categoria',
+    'isPaid': 'Pago',
+    'isRecurring': 'Recorrente',
+    'month': 'Mês',
+    'createdAt': 'Data de Criação'
+  };
+
+  const keys = ['title', 'amount', 'type', 'category', 'isPaid', 'isRecurring', 'month', 'createdAt'];
+  const headers = keys.map(k => headerMap[k] || k).join(',');
+  
   const rows = data.map(obj => 
-    Object.values(obj).map(val => 
-      typeof val === 'string' ? `"${val}"` : val
-    ).join(',')
+    keys.map(key => {
+      let val = obj[key];
+      if (key === 'isPaid' || key === 'isRecurring') val = val ? 'Sim' : 'Não';
+      if (key === 'type') val = val === 'income' ? 'Receita' : 'Despesa';
+      return typeof val === 'string' ? `"${val}"` : val;
+    }).join(',')
   );
   
   const csvContent = [headers, ...rows].join('\n');
