@@ -34,6 +34,8 @@ import {
   DollarSign,
   HelpCircle,
   ShieldCheck,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -110,6 +112,7 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [isFabOpen, setIsFabOpen] = useState(false);
+  const [isHeaderHidden, setIsHeaderHidden] = useState(false);
 
   const currentMonthYear = format(selectedDate, 'yyyy-MM');
 
@@ -367,27 +370,41 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans pb-32 transition-colors duration-300">
       {/* Header / Summary Section */}
-      <header className="bg-slate-900 dark:bg-black border-b border-white/5 p-4 sm:p-6 shadow-2xl sticky top-0 z-40">
-        <div className="absolute inset-0 bg-linear-to-br from-indigo-500/10 via-transparent to-rose-500/5 pointer-events-none" />
-        
-        <div className="max-w-screen-2xl mx-auto space-y-5 relative z-10">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-indigo-600 rounded-2xl text-white shadow-lg shadow-indigo-500/20 flex items-center justify-center">
-                <CreditCard size={22} />
-              </div>
-              <h1 className="text-xl font-black tracking-tighter text-white">Tatu Finanças</h1>
-            </div>
+      <AnimatePresence>
+        {!isHeaderHidden && (
+          <motion.header 
+            initial={{ height: 'auto', opacity: 1 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0, overflow: 'hidden' }}
+            className="bg-slate-900 dark:bg-black border-b border-white/5 p-4 sm:p-6 shadow-2xl sticky top-0 z-40"
+          >
+            <div className="absolute inset-0 bg-linear-to-br from-indigo-500/10 via-transparent to-rose-500/5 pointer-events-none" />
             
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={() => setIsSettingsOpen(true)}
-                className="p-3 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 rounded-2xl border border-white/10 transition-all shadow-sm active:scale-95"
-              >
-                <Settings size={22} />
-              </button>
-            </div>
-          </div>
+            <div className="max-w-screen-2xl mx-auto space-y-5 relative z-10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-indigo-600 rounded-2xl text-white shadow-lg shadow-indigo-500/20 flex items-center justify-center">
+                    <CreditCard size={22} />
+                  </div>
+                  <h1 className="text-xl font-black tracking-tighter text-white">Tatu Finanças</h1>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => setIsHeaderHidden(true)}
+                    className="p-3 bg-white/5 text-white/50 hover:text-white hover:bg-white/10 rounded-2xl border border-white/10 transition-all shadow-sm active:scale-95"
+                    title="Esconder Resumo"
+                  >
+                    <EyeOff size={20} />
+                  </button>
+                  <button 
+                    onClick={() => setIsSettingsOpen(true)}
+                    className="p-3 bg-white/5 text-white/70 hover:text-white hover:bg-white/10 rounded-2xl border border-white/10 transition-all shadow-sm active:scale-95"
+                  >
+                    <Settings size={22} />
+                  </button>
+                </div>
+              </div>
           
           <div className="flex items-center justify-between gap-4">
             {/* Minimal Navigation & Filters Cluster */}
@@ -489,9 +506,26 @@ export default function App() {
               <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest mb-1">Saldo</p>
               <p className="text-lg font-black text-white">{formatCurrency(balance)}</p>
             </div>
+            </div>
+            </div>
+          </motion.header>
+        )}
+      </AnimatePresence>
+
+      {/* Show header toggle when hidden */}
+      {isHeaderHidden && (
+        <div className="sticky top-4 left-0 right-0 z-40 pointer-events-none px-4">
+          <div className="max-w-screen-2xl mx-auto flex justify-end">
+            <button 
+              onClick={() => setIsHeaderHidden(false)}
+              className="p-3 bg-slate-900 dark:bg-slate-800 text-white rounded-2xl shadow-2xl border border-white/10 pointer-events-auto transition-all active:scale-95 hover:bg-indigo-600"
+              title="Mostrar Resumo"
+            >
+              <Eye size={20} />
+            </button>
           </div>
         </div>
-      </header>
+      )}
 
       {/* Mobile Navigation (Subtle) */}
       <div className="sm:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
@@ -528,7 +562,7 @@ export default function App() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-32"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 pb-32"
             >
               {sortedAccounts.length === 0 ? (
                 <div className="col-span-full bg-white dark:bg-gray-800 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-3xl p-20 text-center flex flex-col items-center justify-center">
@@ -557,7 +591,7 @@ export default function App() {
                     }}
                     key={account.id}
                     className={cn(
-                      "group bg-white dark:bg-slate-800 p-4 sm:p-5 rounded-[2rem] shadow-sm border transition-all flex flex-col h-full min-h-[160px] relative overflow-hidden",
+                      "group bg-white dark:bg-slate-800 p-3.5 sm:p-4 rounded-[1.75rem] shadow-sm border transition-all flex flex-col h-full min-h-[150px] relative overflow-hidden",
                       account.isPaid 
                         ? "border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 opacity-70 grayscale-[0.3] shadow-inner" 
                         : account.type === 'income' 
@@ -599,12 +633,12 @@ export default function App() {
 
                     <div className="flex-1 px-1">
                       <h3 className={cn(
-                        "font-bold mb-1 sm:mb-2 leading-tight sm:leading-snug line-clamp-1 sm:line-clamp-2 transition-colors",
+                        "text-sm font-bold mb-1 sm:mb-2 leading-tight sm:leading-snug line-clamp-1 sm:line-clamp-2 transition-colors",
                         account.isPaid ? "text-slate-500 dark:text-slate-500" : "text-slate-900 dark:text-white"
                       )}>{account.title}</h3>
                       <div className="flex items-baseline gap-2">
                         <span className={cn(
-                          "text-xl sm:text-2xl font-black tracking-tighter transition-colors",
+                          "text-lg sm:text-xl font-black tracking-tighter transition-colors",
                           account.type === 'income' ? "text-emerald-600" : (account.isPaid ? "text-slate-500" : "text-slate-900 dark:text-white")
                         )}>
                           {account.type === 'income' ? '+': '-'} {formatCurrency(account.amount)}
